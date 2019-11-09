@@ -215,3 +215,6 @@ pip-selfcheck.json
 !/static/js/
 !/static/gis/
 !/wmap_201920_django/secrets.py
+/static/
+/static/App/
+!/Dockerfile_ngnix
