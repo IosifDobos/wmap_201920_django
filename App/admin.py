@@ -33,13 +33,6 @@ class OwnerAdmin(UserAdmin):
     readonly_fields = ('id', 'last_login', 'date_joined', 'is_superuser')
 
     list_display = ['username', 'email', 'first_name', 'last_name', 'last_login', 'date_joined', 'is_staff', 'is_superuser']
-    # fieldsets = (
-    #     (None, {'fields': ('id', 'username', 'password')}),
-    #     ('Personal Info', {'fields': ('first_name', 'last_name')}),
-    #     ('Profile Info', {'fields': ('profile_phone_number', 'photo',)}),
-    #     ('Account Status', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups',)}),
-    #     ('Dates', {'fields': ('last_login', 'date_joined', 'created', 'modified')}),
-    # )
 
     def get_inline_instances(self, request, obj=None):
         if not obj:

@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load bootstrap3 %}
+{% load leaflet_tags %}
+{% load static %}
+
+{% block extra_head %}
+    {% leaflet_css %}
+    {% leaflet_js %}
+
+    <style>
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+
+    </style>
+    <script>
+        $(document).ready(function () {
+            var windowHeight = $(window).height();
+            var headHeight = $("#header").height();
+            var footHeight = $("#footer").height();
+            console.log("w: " + windowHeight +", h: " + headHeight + ", f: " + footHeight);
+            $("#map").css("height", (windowHeight -(headHeight + footHeight)));
+            if (windowHeight > 0) {
+
+            }
+            if (headHeight > 0) {
+                $("#main-div").css("margin-top", (headHeight + 10).toString() + "px");
+            }
+        });
+
+        var locationMarker;
+        L.Icon.Default.prototype.options.iconUrl = 'marker-icon.png';
+        L.Icon.Default.prototype.options.iconRetinaUrl = 'marker-icon.png';
+        L.Icon.Default.prototype.options.shadowUrl = 'marker-shadow.png';
+        var circle;
+        var bboxEDs;
+        var myED;
+        var HOST = location.protocol + "//" + location.host + "/api/";
+        var URL_SET = {
+            "my_ed": "myed/",
+            "bbox_eds": "bboxeds/",
+            "update_pos_db": "updateposdb/"
+        };
+
+        function myGeoPosition(p) {
+            this.coords = {};
+            this.coords.latitude = p.coords.latitude;
+            this.coords.longitude = p.coords.longitude;
+            this.coords.accuracy = (p.coords.accuracy) ? p.coords.accuracy : 0;
+            this.timestamp = (p.timestamp) ? p.timestamp : new Date().getTime();
+        }
+
+        function getCurrentlocation() {
+            console.log("In getCurrentlocation.");
+            var myLatLon;
+            var myPos;
+
+            navigator.geolocation.getCurrentPosition(
+                function (pos) {
+                    console.log("Got location");
+                    myPos = new myGeoPosition(pos);
+                    localStorage.lastKnownCurrentPosition = JSON.stringify(myPos);
+                },
+                function (err) {
+                    console.log("Location error: " + err.message);
+                },
+                {
+                    enableHighAccuracy: true,
+                    // maximumAge: 60000,
+                    timeout: 30000
+                }
+            );
+        }
+
+        function setMapToCurrentLocation(map) {
+            console.log("In setMapToCurrentLocation.");
+            if (localStorage.lastKnownCurrentPosition) {
+                var myPos = JSON.parse(localStorage.lastKnownCurrentPosition);
+                var myLatLon = L.latLng(myPos.coords.latitude, myPos.coords.longitude);
+                map.flyTo(myLatLon, 16);
+                if (locationMarker) {
+                    map.removeLayer(locationMarker);
+                }
+                locationMarker = L.marker(myLatLon).addTo(map);
+                if (circle) {
+                    map.removeLayer(circle);
+                }
+                circle = L.circle(myLatLon, {
+                    color: 'blue',
+                    fillColor: 'blue',
+                    fillOpacity: 0.3,
+                    radius: myPos.coords.accuracy
+                }).addTo(map);
+            }
+        }
+
+        function map_init(map, options) {
+            map.setView([53.5, -8.5], 11);
+            console.log("Invalidating map size");
+            map.invalidateSize();
+            getCurrentlocation();
+            setMapToCurrentLocation(map);
+            map.on('touchstart click dblclick ', function () {
+                setMapToCurrentLocation(map);
+                update_position_db();
+                find_bbox_eds(map);
+                find_loc_ed(map);
+            });
+        }
+
+        function find_loc_ed(map) {
+            if (!map) {
+                console.log("Cannot find map object");
+            }
+
+            if (localStorage.lastKnownCurrentPosition) {
+                var myPos = JSON.parse(localStorage.lastKnownCurrentPosition);
+                var locString = myPos.coords.longitude + ", " + myPos.coords.latitude;
+
+                $.ajax({
+                    type: "GET",
+                    headers: {
+                    },
+                    url: HOST + URL_SET["my_ed"],
+                    data: {
+                        point: locString
+                    }
+                }).done(function (data, status, xhr) {
+                    if (map.hasLayer(myED)) {
+                        myED.remove();
+                    }
+                    myED = L.geoJSON(data, {
+                        style: function (feature) {
+                            return {
+                                fill: false,
+                                weight: 6,
+                                opacity: 1,
+                                color: 'red'
+                            };
+                        },
+                        onEachFeature: popUp
+                    });
+                    myED.addTo(map);
+                }).fail(function (xhr, status, error) {
+                    console.log(error);
+                }).always(function () {
+                    console.log("find_loc_ed finished");
+                });
+            }
+        }
+
+        function popUp(feature, layer) {
+            if (locationMarker) {
+                var out = [];
+                if (feature.properties) {
+                    for (key in feature.properties) {
+                        out.push(key + ": " + feature.properties[key]);
+                    }
+                    locationMarker.bindPopup(out.join("<br />"));
+                }
+            }
+        }
+
+        function find_bbox_eds(map) {
+            if (!map) {
+                console.log("Cannot find map object");
+            }
+
+            var bboxString = map.getBounds().getWest() + ", " + map.getBounds().getSouth() + ", " + map.getBounds().getEast() + ", " + map.getBounds().getNorth();
+
+            $.ajax({
+                type: "GET",
+                headers: {
+                },
+                url: HOST + URL_SET["bbox_eds"],
+                data: {
+                    bbox: bboxString
+                }
+            }).done(function (data, status, xhr) {
+                if (map.hasLayer(bboxEDs)) {
+                    bboxEDs.remove();
+                }
+                bboxEDs = L.geoJSON(data, {
+                    style: function (feature) {
+                        return {
+                            fill: false,
+                            weight: 2,
+                            opacity: 1,
+                            color: 'red'
+                        };
+                    }
+                });
+                bboxEDs.addTo(map);
+            }).fail(function (xhr, status, error) {
+                console.log(error);
+            }).always(function () {
+                console.log("bbox_eds finished");
+            });
+
+        }
+
+        function update_position_db() {
+            if (localStorage.lastKnownCurrentPosition) {
+                var myPos = JSON.parse(localStorage.lastKnownCurrentPosition);
+                var locString = myPos.coords.longitude + ", " + myPos.coords.latitude;
+
+                $.ajax({
+                    type: "POST",
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    url: HOST + URL_SET["update_pos_db"],
+                    data: {
+                        point: locString
+                    }
+                }).done(function (data, status, xhr) {
+                    console.log(data["message"])
+                }).fail(function (xhr, status, error) {
+                    console.log(error);
+                }).always(function () {
+                    console.log("find_loc_ed finished");
+                });
+            }
+        }
+
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+{% endblock %}
+
+{% block content %}
+
+    {% leaflet_map "map" callback="window.map_init" %}
+
+    <div style="padding: 3em">
+        <p id="map-bbox" style="visibility: hidden; display: none"></p>
+        <p id="map-centre-lat" style="visibility: hidden; display: none"></p>
+        <p id="map-centre-lon" style="visibility: hidden; display: none"></p>
+
+
+    </div>
+{% endblock %}

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{% load pwa %}
+{% load static %}
+{% load i18n %}
+{% load bootstrap3 %}
+
+<head>
+    {% progressive_web_app_meta %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="Description" content="WMAP 2019/20 Sample. {% block head_description %}{% endblock %}">
+    <title>WMAP 2019/20. {% block head_title %}{% endblock %}</title>
+
+    <script src="{% static "js/jquery.js" %}"></script>
+    <script src="https://unpkg.com/pouchdb@^5.2.0/dist/pouchdb.js"></script>
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+
+    <script src="{% static "App/my_main.js" %}"></script>
+
+    {% block extra_head %}
+    {% endblock %}
+
+    <style>
+        @import url("https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300italic,400,400italic,600");
+
+        body {
+            background-color: rgb(255, 255, 255);
+            font-family: 'Source Sans Pro', "Lucida Grande", Verdana, Arial, sans-serif;
+        }
+
+        html, body, #search-map {
+        }
+
+        .head-foot {
+            background-color: #634f5b;
+            color: white;
+            position: fixed;
+            padding: 5px;
+            left: 0;
+            right: 0;
+            z-index: 2000;
+        }
+
+        .a-head-foot:link {
+            background-color: #634f5b;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+        }
+        .a-head-foot:visited {
+            background-color: #634f5b;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+        }
+
+        @media screen and (max-width: 450px) {
+            .my_box {
+                flex-direction: column;
+            }
+
+            .my_box_smaller {
+                width: 100%;
+            }
+
+            .my_box_larger {
+                width: 100%;
+            }
+        }
+
+        @media screen and (min-width: 450px) {
+            .my_box {
+                flex-direction: row;
+            }
+
+            .my_box_smaller {
+                width: 20%;
+            }
+
+            .my_box_larger {
+                width: 80%;
+            }
+        }
+
+        @media screen and (min-width: 1023px) {
+            .leaflet-control-pan, .leaflet-control-zoom {
+                visibility: visible;
+                z-index: 2000;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+<header id="header" class="head-foot" style="top: 0; font-size: large;">
+    <span style="float: left; font-size: x-large; font-weight: normal; padding-top: 0.35em">
+        WMAP 2019/20
+    </span>
+    <span style="float: right; font-size: large; font-weight: bold; padding-top: 0.75em; padding-right: 10px">
+
+        {% if user.is_authenticated %}
+            {% if user.first_name %}
+                {{ user.first_name }}
+            {% else %}
+                {{ user.username }}
+            {% endif %}
+            &nbsp;<span class="dropdown">
+                <a href="#" class="dropdown-toggle a-head-foot" data-toggle="dropdown">{% bootstrap_icon "menu-hamburger" %}</a>
+                <ul class="dropdown-menu dropdown-menu-right a-head-foot">
+                    <li><a href="{% url "app:map_page" %}" class="dropdown-item a-head-foot">Map</a></li>
+                    <li><a href="{% url "app:password_change" %}" class="dropdown-item a-head-foot">Change Password</a></li>
+                    <li><a href="{% url "app:about" %}" class="dropdown-item a-head-foot">About</a></li>
+                    <li><a href="{% url "app:logout" %}" class="dropdown-item a-head-foot">Log Out</a></li>
+                </ul>
+            </span>
+        {% else %}
+        {% endif %}
+    </span>
+
+</header>
+<div id="main-div" style="position: relative">
+    {% block content %}{% endblock %}
+</div>
+<footer id="footer" class="head-foot" style="bottom: 0; font-size: medium; text-align: center;">
+    <a class="a-head-foot"
+       href="{% url "app:about" %}">{% trans "About this site" %}</a>{% block extra_footer %}{% endblock %}
+</footer>
+</body>
+</html>

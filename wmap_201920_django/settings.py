@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+import socket
+from django.urls import path, include, reverse_lazy, reverse
+from . import secrets
+SECRETS = secrets.get_secrets()
+secrets.insert_domainname_in_conf(SECRETS["NGINX_CONF"], SECRETS["MY_DOMAIN_NAME"])
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,13 +25,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'g^-h8i@t#djzx28887ov8f3v$6!!q)%770dsd(k4z2l#vfd+it'
+SECRET_KEY = SECRETS["SECRET_KEY"]
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*', ]
+CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
 
@@ -39,12 +41,19 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'django_extensions',
+    'corsheaders',
+    'crispy_forms',
+    'bootstrap3',
+    'leaflet',
+    'jquery',
+    'pwa',
     'App.apps.AppConfig',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -57,8 +66,7 @@ ROOT_URLCONF = 'wmap_201920_django.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')]
-        ,
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -67,26 +75,17 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'debug': True,
         },
     },
 ]
 
 WSGI_APPLICATION = 'wmap_201920_django.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'wmap201920',
-        'HOST': '193.1.33.31',
-        'USER': 'student',
-        'PASSWORD': 'student',
-    }
-}
-
+DATABASES = SECRETS["DATABASES"]
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
@@ -106,22 +105,69 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+PWA_SERVICE_WORKER_PATH = f'{STATIC_ROOT}/App/js/serviceworker.js'
+PWA_APP_NAME = "Wmap 2019/20"
+PWA_APP_DESCRIPTION = "Sample app for Adv Web Mapping module"
+PWA_APP_START_URL = reverse_lazy('app:default')
+PWA_APP_DISPLAY = 'standalone'
+PWA_APP_ORIENTATION = "portrait"
+PWA_APP_BACKGROUND_COLOR = 'darkgreen'
+PWA_APP_THEME_COLOR = 'brown'
+PWA_APP_ICONS = [
+    {
+        'src': f'{STATIC_URL}App/images/tudublin_logo_192.png',
+        'type': 'image/png',
+        'sizes': '192x192'
+    },
+    {
+        'src': f'{STATIC_URL}App/images/tudublin_logo_512.png',
+        'type': 'image/png',
+        'sizes': '512x512'
+    }
+]
+PWA_APP_SPLASH_SCREEN = []
+
+LOGIN_REDIRECT_URL = reverse_lazy('app:about')
+LOGOUT_REDIRECT_URL = reverse_lazy('app:login')
+
+LEAFLET_CONFIG = {
+    'RESET_VIEW': False,
+    'TILES': [('OSM','https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{"useCache": True, "crossOrigin": True})],
+    'PLUGINS': {
+        'PouchDBCached': {
+            # 'css': ['relative/path/to/stylesheet.css', '/root/path/to/stylesheet.css'],
+            'js': 'https://unpkg.com/leaflet.tilelayer.pouchdbcached@latest/L.TileLayer.PouchDBCached.js',
+            'auto-include': True,
+        },
+    }
+}
+
+# SECURITY WARNING: don't run with debug turned on in production!
+# Your computer hostname goes here
+if socket.gethostname() in SECRETS["ALLOWED_HOSTNAMES"]:
+    DEBUG = True
+    TEMPLATES[0]["OPTIONS"]["debug"] = True
+else:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    DEBUG = False
+    TEMPLATES[0]["OPTIONS"]["debug"] = False

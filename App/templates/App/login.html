@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load bootstrap3 %}
+
+{% block content %}
+<div style="padding: 3em">
+<h3>Login Form</h3>
+
+{% bootstrap_messages %}
+
+<form method="post" action="{% url 'app:login' %}">
+{% csrf_token %}
+    {% bootstrap_form form %}
+
+    {% buttons %}
+    <button type="submit" class="btn btn-primary">
+      {% bootstrap_icon "log-in" %} &nbsp;Log In
+    </button>
+  {% endbuttons %}
+
+<input type="hidden" name="next" value="{{ next }}">
+</form>
+
+{# Assumes you setup the password_reset view in your URLconf #}
+{#<p><a href="{% url 'app:password_reset' %}">Lost password?</a></p>#}
+</div>
+{% endblock %}

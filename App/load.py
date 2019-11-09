@@ -96,7 +96,6 @@ data = [
 
 def run(verbose=True):
     for entry in data:
-        # from .models import globals()[entry["data_class"]]
         file_name = os.path.abspath(
             os.path.join(os.path.dirname(__file__), 'data', f'{entry["data_file"]}.shp'),
         )

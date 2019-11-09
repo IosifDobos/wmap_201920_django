@@ -209,3 +209,9 @@ pyvenv.cfg
 .venv
 pip-selfcheck.json
 
+!/static/leaflet/
+!/static/django_extensions/
+!/static/admin/
+!/static/js/
+!/static/gis/
+!/wmap_201920_django/secrets.py
