@@ -38,8 +38,8 @@ server {
     # SSL cert info. These directories are from the host, mounted by docker-compose
     ssl_certificate /etc/letsencrypt/live/--your-domainname-goes-here--/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/--your-domainname-goes-here--/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+    include /usr/src/app/options-ssl-nginx.conf;
+    ssl_dhparam /usr/src/app/ssl-dhparams.pem;
 
     # Django media
     location /media  {
