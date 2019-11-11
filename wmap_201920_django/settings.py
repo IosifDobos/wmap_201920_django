@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import os
 import socket
 from django.urls import path, include, reverse_lazy, reverse
+
+# Here we make sure that we don't commit private data such as db userids/passwords to a public GitHub repository.
+# Also set up configuration files to ease deployment on Docker with SSL/TLS cert.
 from . import secrets
 SECRETS = secrets.get_secrets()
 secrets.insert_domainname_in_conf(SECRETS["NGINX_CONF"], SECRETS["MY_DOMAIN_NAME"])
