@@ -6,7 +6,7 @@ chdir = %d
 socket = %dapp.sock
 # load the module from wsgi.py, it is a python path from
 # the directory above.
-module = wmap_201920_django.wsgi
+module = --your-project-name-goes-here--.wsgi
 # allow anyone to connect to the socket. This is very permissive
 chmod-socket=666
 

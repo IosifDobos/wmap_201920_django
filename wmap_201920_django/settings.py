@@ -20,6 +20,7 @@ from . import secrets
 SECRETS = secrets.get_secrets()
 secrets.insert_domainname_in_conf(SECRETS["NGINX_CONF"], SECRETS["MY_DOMAIN_NAME"])
 secrets.insert_imagename_in_compose(SECRETS["DOCKER_COMPOSE_FILE"], SECRETS["DOCKER_IMAGE"])
+secrets.insert_projectname_in_uwsgi_ini(__file__.split("/")[-2], "uwsgi.ini")
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -155,8 +156,13 @@ LEAFLET_CONFIG = {
     'TILES': [('OSM','https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{"useCache": True, "crossOrigin": True})],
     'PLUGINS': {
         'PouchDBCached': {
-            # 'css': ['relative/path/to/stylesheet.css', '/root/path/to/stylesheet.css'],
             'js': 'https://unpkg.com/leaflet.tilelayer.pouchdbcached@latest/L.TileLayer.PouchDBCached.js',
+            'auto-include': True,
+        },
+        'MarkerCluster': {
+            'js': 'https://unpkg.com/leaflet.markercluster@latest/dist/leaflet.markercluster.js',
+            'css': ['https://unpkg.com/leaflet.markercluster@latest/dist/MarkerCluster.css',
+                    'https://unpkg.com/leaflet.markercluster@latest/dist/MarkerCluster.Default.css'],
             'auto-include': True,
         },
     }

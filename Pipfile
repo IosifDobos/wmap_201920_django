@@ -17,6 +17,7 @@ django-bootstrap3 = "*"
 uwsgi = "*"
 django-cors-headers = "*"
 django-pwa = "*"
+overpy = "*"
 
 [requires]
 python_version = "3.7"
