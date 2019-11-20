@@ -20,7 +20,13 @@ from . import secrets
 SECRETS = secrets.get_secrets()
 secrets.insert_domainname_in_conf(SECRETS["NGINX_CONF"], SECRETS["MY_DOMAIN_NAME"])
 secrets.insert_imagename_in_compose(SECRETS["DOCKER_COMPOSE_FILE"], SECRETS["DOCKER_IMAGE"])
-secrets.insert_projectname_in_uwsgi_ini(__file__.split("/")[-2], "uwsgi.ini")
+
+## Need to change '/' to '\\' for Windows. Double backslash is because \ normally denotes an escape character
+# Uncomment the following if you are using Linux or Mac
+#secrets.insert_projectname_in_uwsgi_ini(__file__.split("/")[-2], "uwsgi.ini")
+
+# Comment the following line if you ae using Linux or Mac
+secrets.insert_projectname_in_uwsgi_ini(__file__.split("\\")[-2], "uwsgi.ini")
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
