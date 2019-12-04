@@ -14,6 +14,10 @@ import os
 import socket
 from django.urls import path, include, reverse_lazy, reverse
 
+if os.name == "nt":
+    import fix_gdal
+    fix_gdal.fix()
+
 # Here we make sure that we don't commit private data such as db userids/passwords to a public GitHub repository.
 # Also set up configuration files to ease deployment on Docker with SSL/TLS cert.
 from . import secrets
@@ -51,6 +55,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'django_extensions',
+    'rest_framework',
+    'rest_framework_gis',
+    'rest_framework.authtoken',
     'corsheaders',
     'crispy_forms',
     'bootstrap3',
@@ -186,3 +193,15 @@ else:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     DEBUG = False
     TEMPLATES[0]["OPTIONS"]["debug"] = False
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ]
+}
